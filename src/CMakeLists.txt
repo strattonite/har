@@ -17,9 +17,11 @@ SET(CMAKE_STATIC_LIBRARY_SUFFIX)
 SET(CMAKE_EXECUTABLE_LIBRARY_PREFIX)
 SET(CMAKE_EXECUTABLE_LIBRARY_SUFFIX)
 
-
 # CURRENT DIRECTORY
 SET(ProjDirPath ${CMAKE_CURRENT_SOURCE_DIR})
+
+SET(CMSISCORE ${ProjDirPath}/../../../../CMSIS_5/CMSIS/Core)
+SET(CMSISDSP ${ProjDirPath}/../../../../CMSIS-DSP)
 
 # DEBUG LINK FILE
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -T${ProjDirPath}/../../../../platform/linker/MKL03Z4/gcc/MKL03Z32xxx4_flash.ld  -static")
@@ -60,6 +62,8 @@ SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}  -DFREEDOM")
 
 # CXX MACRO
 
+ADD_SUBDIRECTORY(${CMSISDSP}/Source bin_dsp)
+
 # INCLUDE_DIRECTORIES
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/utilities/inc)
@@ -71,6 +75,8 @@ IF(CMAKE_BUILD_TYPE MATCHES Debug)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/har)
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/har)
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../CMSIS-DSP/Include)
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/utilities/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/osa/inc)
@@ -80,18 +86,18 @@ ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/hal/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/drivers/inc)
     INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../platform/system/inc)
-    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../boards/har)
+    INCLUDE_DIRECTORIES(${ProjDirPath}/../../../../CMSIS-DSP/Include)
 ENDIF()
 
 # ADD_EXECUTABLE
-ADD_EXECUTABLE(Warp 
+ADD_EXECUTABLE(Har 
     "${ProjDirPath}/../../../../platform/utilities/src/fsl_misc_utilities.c"
     "${ProjDirPath}/../../../../platform/startup/MKL03Z4/gcc/startup_MKL03Z4.S"
     "${ProjDirPath}/../../src/boot.c"
     "${ProjDirPath}/../../src/errstrsEN.c"
-    "${ProjDirPath}/../../src/powermodes.c"
     "${ProjDirPath}/../../src/devMMA8451Q.c"
     "${ProjDirPath}/../../src/devSSD1331.c"
+    "${ProjDirPath}/../../src/inference.c"
     "${ProjDirPath}/../../src/SEGGER_RTT.c"
     "${ProjDirPath}/../../src/SEGGER_RTT_printf.c"
     "${ProjDirPath}/../../../../platform/drivers/src/i2c/fsl_i2c_irq.c"
@@ -103,28 +109,32 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../../../boards/har/gpio_pins.c"
     "${ProjDirPath}/../../../../boards/har/gpio_pins.h"
 )
-SET_TARGET_PROPERTIES(Warp PROPERTIES OUTPUT_NAME "Warp.elf")
+SET_TARGET_PROPERTIES(Har PROPERTIES OUTPUT_NAME "Har.elf")
 
-TARGET_LINK_LIBRARIES(Warp -Wl,--start-group)
+TARGET_LINK_LIBRARIES(Har -Wl,--start-group)
 # LIBRARIES
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
-    TARGET_LINK_LIBRARIES(Warp ${ProjDirPath}/../../../../lib/ksdk_platform_lib/armgcc/KL03Z4/debug/libksdk_platform.a)
+    TARGET_LINK_LIBRARIES(Har ${ProjDirPath}/../../../../lib/ksdk_platform_lib/armgcc/KL03Z4/debug/libksdk_platform.a)
 ELSEIF(CMAKE_BUILD_TYPE MATCHES Release)
-    TARGET_LINK_LIBRARIES(Warp ${ProjDirPath}/../../../../lib/ksdk_platform_lib/armgcc/KL03Z4/release/libksdk_platform.a)
+    TARGET_LINK_LIBRARIES(Har ${ProjDirPath}/../../../../lib/ksdk_platform_lib/armgcc/KL03Z4/release/libksdk_platform.a)
 ENDIF()
 
+TARGET_LINK_LIBRARIES(Har CMSISDSP)
+
+# TARGET_INCLUDE_DIRECTORIES(CMSIS_DSP PUBLIC "${ProjDirPath}/../../../../platform/CMSIS/Include")
+
 # SYSTEM LIBRARIES
-TARGET_LINK_LIBRARIES(Warp m)
-TARGET_LINK_LIBRARIES(Warp c)
-TARGET_LINK_LIBRARIES(Warp gcc)
-TARGET_LINK_LIBRARIES(Warp nosys)
-TARGET_LINK_LIBRARIES(Warp -Wl,--end-group)
+TARGET_LINK_LIBRARIES(Har m)
+TARGET_LINK_LIBRARIES(Har c)
+TARGET_LINK_LIBRARIES(Har gcc)
+TARGET_LINK_LIBRARIES(Har nosys)
+TARGET_LINK_LIBRARIES(Har -Wl,--end-group)
 
 # MAP FILE
-SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}  -Xlinker -Map=debug/Warp.map")
-SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}  -Xlinker -Map=release/Warp.map")
+SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}  -Xlinker -Map=debug/Har.map")
+SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}  -Xlinker -Map=release/Har.map")
 
 # BIN AND HEX
-ADD_CUSTOM_COMMAND(TARGET Warp POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Oihex ${EXECUTABLE_OUTPUT_PATH}/Warp.elf ${EXECUTABLE_OUTPUT_PATH}/Warp.hex)
-ADD_CUSTOM_COMMAND(TARGET Warp POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Obinary ${EXECUTABLE_OUTPUT_PATH}/Warp.elf ${EXECUTABLE_OUTPUT_PATH}/Warp.bin)
-ADD_CUSTOM_COMMAND(TARGET Warp POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Osrec ${EXECUTABLE_OUTPUT_PATH}/Warp.elf ${EXECUTABLE_OUTPUT_PATH}/Warp.srec)
+ADD_CUSTOM_COMMAND(TARGET Har POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Oihex ${EXECUTABLE_OUTPUT_PATH}/Har.elf ${EXECUTABLE_OUTPUT_PATH}/Har.hex)
+ADD_CUSTOM_COMMAND(TARGET Har POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Obinary ${EXECUTABLE_OUTPUT_PATH}/Har.elf ${EXECUTABLE_OUTPUT_PATH}/Har.bin)
+ADD_CUSTOM_COMMAND(TARGET Har POST_BUILD COMMAND ${CMAKE_OBJCOPY} -Osrec ${EXECUTABLE_OUTPUT_PATH}/Har.elf ${EXECUTABLE_OUTPUT_PATH}/Har.srec)

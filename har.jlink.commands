@@ -1,0 +1,6 @@
+power on perm
+exec EnableRemarks
+unlock kinetis
+loadfile /Users/tristan/Documents/course/IIB/4B25/coursework/har/build/work/demos/har/armgcc/har/release/Har.srec
+r
+go

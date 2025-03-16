@@ -36,7 +36,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdlib.h>
-
+#include <stdio.h>
 /*
  *	config.h needs to come first
  */
@@ -55,56 +55,121 @@
 #include "gpio_pins.h"
 #include "SEGGER_RTT.h"
 #include "warp.h"
+#include "devMMA8451Q.h"
 
+extern volatile MMA8451DeviceState deviceMMA8451QState;
+extern volatile uint32_t gWarpI2cBaudRateKbps;
+extern volatile uint32_t gWarpI2cTimeoutMilliseconds;
+extern volatile uint32_t gWarpSupplySettlingDelayMilliseconds;
+uint16_t MMA8451Reads;
 
-extern volatile WarpI2CDeviceState	deviceMMA8451QState;
-extern volatile uint32_t		gWarpI2cBaudRateKbps;
-extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
-extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
-
-
-
-void
-initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
+void initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceMMA8451QState.i2cAddress			= i2cAddress;
-	deviceMMA8451QState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+	deviceMMA8451QState.i2cAddress = i2cAddress;
+	deviceMMA8451QState.operatingVoltageMillivolts = operatingVoltageMillivolts;
 
+	// warpPrint("set operating voltage to %d", operatingVoltageMillivolts);
 	return;
+}
+
+void configureMMA8451Q()
+{
+	// set data rate to 6.25 Hz, LNOISE active, STANDBY
+	writeSensorRegisterMMA8451Q(0x2a, 0x34);
+	// set FIFO buffer to be enabled and in fill mode
+	// writeSensorRegisterMMA8451Q(0x09, 0x80);
+	writeSensorRegisterMMA8451Q(0x09, 0x90);
+	// set OS mode (normal: 0x00, lnlp: 0x01, lp: 0x3, hp: 0x02)
+	writeSensorRegisterMMA8451Q(0x2b, 0x00);
+	// enable FIFO interrupts (INT2 pin -> PTA12)
+	writeSensorRegisterMMA8451Q(0x2d, 0x40);
+	// ACTIVE
+	writeSensorRegisterMMA8451Q(0x2a, 0x34 | 0x01);
+}
+
+WarpStatus readFIFO(uint8_t *buffer)
+{
+	uint8_t cmdBuf[1] = {0x01};
+	i2c_status_t status;
+
+	i2c_device_t slave =
+		{
+			.address = deviceMMA8451QState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
+
+	warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
+	warpEnableI2Cpins();
+
+	status = I2C_DRV_MasterReceiveDataBlocking(
+		0 /* I2C peripheral instance */,
+		&slave,
+		cmdBuf,
+		1,
+		buffer,
+		96,
+		1000000);
+
+	if (status != kStatus_I2C_Success)
+	{
+		return kWarpStatusDeviceCommunicationFailed;
+	}
+
+	return kWarpStatusOK;
 }
 
 WarpStatus
 writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload)
 {
-	uint8_t		payloadByte[1], commandByte[1];
-	i2c_status_t	status;
+	uint8_t payloadByte[1], commandByte[1];
+	i2c_status_t status;
 
 	switch (deviceRegister)
 	{
-		case 0x09: case 0x0a: case 0x0e: case 0x0f:
-		case 0x11: case 0x12: case 0x13: case 0x14:
-		case 0x15: case 0x17: case 0x18: case 0x1d:
-		case 0x1f: case 0x20: case 0x21: case 0x23:
-		case 0x24: case 0x25: case 0x26: case 0x27:
-		case 0x28: case 0x29: case 0x2a: case 0x2b:
-		case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-		case 0x30: case 0x31:
-		{
-			/* OK */
-			break;
-		}
-		
-		default:
-		{
-			return kWarpStatusBadDeviceCommand;
-		}
+	case 0x09:
+	case 0x0a:
+	case 0x0e:
+	case 0x0f:
+	case 0x11:
+	case 0x12:
+	case 0x13:
+	case 0x14:
+	case 0x15:
+	case 0x17:
+	case 0x18:
+	case 0x1d:
+	case 0x1f:
+	case 0x20:
+	case 0x21:
+	case 0x23:
+	case 0x24:
+	case 0x25:
+	case 0x26:
+	case 0x27:
+	case 0x28:
+	case 0x29:
+	case 0x2a:
+	case 0x2b:
+	case 0x2c:
+	case 0x2d:
+	case 0x2e:
+	case 0x2f:
+	case 0x30:
+	case 0x31:
+	{
+		/* OK */
+		break;
+	}
+
+	default:
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
 	}
 
 	i2c_device_t slave =
-	{
-		.address = deviceMMA8451QState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		{
+			.address = deviceMMA8451QState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
 
 	warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
 	commandByte[0] = deviceRegister;
@@ -112,13 +177,13 @@ writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload)
 	warpEnableI2Cpins();
 
 	status = I2C_DRV_MasterSendDataBlocking(
-							0 /* I2C instance */,
-							&slave,
-							commandByte,
-							1,
-							payloadByte,
-							1,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C instance */,
+		&slave,
+		commandByte,
+		1,
+		payloadByte,
+		1,
+		gWarpI2cTimeoutMilliseconds);
 	if (status != kStatus_I2C_Success)
 	{
 		return kWarpStatusDeviceCommunicationFailed;
@@ -128,74 +193,86 @@ writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload)
 }
 
 WarpStatus
-configureSensorMMA8451Q(uint8_t payloadF_SETUP, uint8_t payloadCTRL_REG1)
-{
-	WarpStatus	i2cWriteStatus1, i2cWriteStatus2;
-
-
-	warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
-
-	i2cWriteStatus1 = writeSensorRegisterMMA8451Q(kWarpSensorConfigurationRegisterMMA8451QF_SETUP /* register address F_SETUP */,
-							payloadF_SETUP /* payload: Disable FIFO */
-							);
-
-	i2cWriteStatus2 = writeSensorRegisterMMA8451Q(kWarpSensorConfigurationRegisterMMA8451QCTRL_REG1 /* register address CTRL_REG1 */,
-							payloadCTRL_REG1 /* payload */
-							);
-
-	return (i2cWriteStatus1 | i2cWriteStatus2);
-}
-
-WarpStatus
 readSensorRegisterMMA8451Q(uint8_t deviceRegister, int numberOfBytes)
 {
-	uint8_t		cmdBuf[1] = {0xFF};
-	i2c_status_t	status;
-
+	uint8_t cmdBuf[1] = {0xFF};
+	i2c_status_t status;
 
 	USED(numberOfBytes);
 	switch (deviceRegister)
 	{
-		case 0x00: case 0x01: case 0x02: case 0x03: 
-		case 0x04: case 0x05: case 0x06: case 0x09:
-		case 0x0a: case 0x0b: case 0x0c: case 0x0d:
-		case 0x0e: case 0x0f: case 0x10: case 0x11:
-		case 0x12: case 0x13: case 0x14: case 0x15:
-		case 0x16: case 0x17: case 0x18: case 0x1d:
-		case 0x1e: case 0x1f: case 0x20: case 0x21:
-		case 0x22: case 0x23: case 0x24: case 0x25:
-		case 0x26: case 0x27: case 0x28: case 0x29:
-		case 0x2a: case 0x2b: case 0x2c: case 0x2d:
-		case 0x2e: case 0x2f: case 0x30: case 0x31:
-		{
-			/* OK */
-			break;
-		}
-		
-		default:
-		{
-			return kWarpStatusBadDeviceCommand;
-		}
+	case 0x00:
+	case 0x01:
+	case 0x02:
+	case 0x03:
+	case 0x04:
+	case 0x05:
+	case 0x06:
+	case 0x09:
+	case 0x0a:
+	case 0x0b:
+	case 0x0c:
+	case 0x0d:
+	case 0x0e:
+	case 0x0f:
+	case 0x10:
+	case 0x11:
+	case 0x12:
+	case 0x13:
+	case 0x14:
+	case 0x15:
+	case 0x16:
+	case 0x17:
+	case 0x18:
+	case 0x1d:
+	case 0x1e:
+	case 0x1f:
+	case 0x20:
+	case 0x21:
+	case 0x22:
+	case 0x23:
+	case 0x24:
+	case 0x25:
+	case 0x26:
+	case 0x27:
+	case 0x28:
+	case 0x29:
+	case 0x2a:
+	case 0x2b:
+	case 0x2c:
+	case 0x2d:
+	case 0x2e:
+	case 0x2f:
+	case 0x30:
+	case 0x31:
+	{
+		/* OK */
+		break;
+	}
+
+	default:
+	{
+		return kWarpStatusBadDeviceCommand;
+	}
 	}
 
 	i2c_device_t slave =
-	{
-		.address = deviceMMA8451QState.i2cAddress,
-		.baudRate_kbps = gWarpI2cBaudRateKbps
-	};
+		{
+			.address = deviceMMA8451QState.i2cAddress,
+			.baudRate_kbps = gWarpI2cBaudRateKbps};
 
 	warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
 	cmdBuf[0] = deviceRegister;
 	warpEnableI2Cpins();
 
 	status = I2C_DRV_MasterReceiveDataBlocking(
-							0 /* I2C peripheral instance */,
-							&slave,
-							cmdBuf,
-							1,
-							(uint8_t *)deviceMMA8451QState.i2cBuffer,
-							numberOfBytes,
-							gWarpI2cTimeoutMilliseconds);
+		0 /* I2C peripheral instance */,
+		&slave,
+		cmdBuf,
+		1,
+		(uint8_t *)deviceMMA8451QState.i2cBuffer,
+		numberOfBytes,
+		gWarpI2cTimeoutMilliseconds);
 
 	if (status != kStatus_I2C_Success)
 	{
@@ -205,14 +282,12 @@ readSensorRegisterMMA8451Q(uint8_t deviceRegister, int numberOfBytes)
 	return kWarpStatusOK;
 }
 
-void
-printSensorDataMMA8451Q(bool hexModeFlag)
+void printSensorDataMMA8451Q(bool hexModeFlag)
 {
-	uint16_t	readSensorRegisterValueLSB;
-	uint16_t	readSensorRegisterValueMSB;
-	int16_t		readSensorRegisterValueCombined;
-	WarpStatus	i2cReadStatus;
-
+	uint16_t readSensorRegisterValueLSB;
+	uint16_t readSensorRegisterValueMSB;
+	int16_t readSensorRegisterValueCombined;
+	WarpStatus i2cReadStatus;
 
 	warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
 

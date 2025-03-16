@@ -40,6 +40,12 @@
 #define WARP_BUILD_BOOT_TO_VLPR 1
 #define WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT 0
 
+#define ARM_MATH_CM0PLUS 1
+#define OUTPUT_TIME 1
+#define OUTPUT_FREQ 1
+#define OUTPUT_POWER 0
+#define DEBUG_LED 1
+
 /*
  *	NOTE: The choice of WARP_BUILD_ENABLE_GLAUX_VARIANT is defined via the Makefile build rules.
  *	The commented line below should never be uncommented. It is just here to stress a point that

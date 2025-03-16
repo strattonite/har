@@ -301,12 +301,5 @@ typedef struct
 } WarpPowerManagerCallbackStructure;
 
 void warpScaleSupplyVoltage(uint16_t voltageMillivolts);
-void warpDisableSupplyVoltage(void);
-WarpStatus warpSetLowPowerMode(WarpPowerMode powerMode, uint32_t sleepSeconds);
 void warpEnableI2Cpins(void);
-void warpDisableI2Cpins(void);
-void warpEnableSPIpins(void);
-void warpDisableSPIpins(void);
-void warpDeasserAllSPIchipSelects(void);
 void warpPrint(const char *fmt, ...);
-int warpWaitKey(void);

@@ -41,8 +41,7 @@ void PORTA_IRQHandler(void)
     /* Clear interrupt flag.*/
     PORT_HAL_ClearPortIntFlag(PORTA_BASE);
 }
-
-#if defined (KL46Z4_SERIES)
+#if defined(KL46Z4_SERIES)
 /* gpio IRQ handler with the same name in startup code. */
 void PORTC_PORTD_IRQHandler(void)
 {
@@ -52,11 +51,11 @@ void PORTC_PORTD_IRQHandler(void)
 }
 #endif
 
-#if defined (KL25Z4_SERIES) || defined (K70F12_SERIES) || defined(K60D10_SERIES) || \
-    defined (K22F12810_SERIES) || defined (K22F25612_SERIES) || defined (K22F51212_SERIES) || \
-    defined (KV31F12810_SERIES) || defined (KV31F25612_SERIES) || defined (KV31F51212_SERIES) || \
-    defined (K64F12_SERIES) || defined (K24F12_SERIES) || defined (K63F12_SERIES) || \
-    defined (K24F25612_SERIES) || defined (KV30F12810_SERIES) || defined (K02F12810_SERIES)
+#if defined(KL25Z4_SERIES) || defined(K70F12_SERIES) || defined(K60D10_SERIES) ||             \
+    defined(K22F12810_SERIES) || defined(K22F25612_SERIES) || defined(K22F51212_SERIES) ||    \
+    defined(KV31F12810_SERIES) || defined(KV31F25612_SERIES) || defined(KV31F51212_SERIES) || \
+    defined(K64F12_SERIES) || defined(K24F12_SERIES) || defined(K63F12_SERIES) ||             \
+    defined(K24F25612_SERIES) || defined(KV30F12810_SERIES) || defined(K02F12810_SERIES)
 /* gpio IRQ handler with the same name in startup code. */
 void PORTD_IRQHandler(void)
 {
@@ -65,11 +64,11 @@ void PORTD_IRQHandler(void)
 }
 #endif
 
-#if defined (K70F12_SERIES) || defined(K60D10_SERIES) || \
-    defined (K64F12_SERIES) || defined (K24F12_SERIES) || defined (K63F12_SERIES) || \
-    defined (K22F12810_SERIES) || defined (K22F25612_SERIES) || defined (K22F51212_SERIES) || \
-    defined (KV31F12810_SERIES) || defined (KV31F25612_SERIES) || defined (KV31F51212_SERIES) || \
-    defined (K24F25612_SERIES)
+#if defined(K70F12_SERIES) || defined(K60D10_SERIES) ||                                       \
+    defined(K64F12_SERIES) || defined(K24F12_SERIES) || defined(K63F12_SERIES) ||             \
+    defined(K22F12810_SERIES) || defined(K22F25612_SERIES) || defined(K22F51212_SERIES) ||    \
+    defined(KV31F12810_SERIES) || defined(KV31F25612_SERIES) || defined(KV31F51212_SERIES) || \
+    defined(K24F25612_SERIES)
 /* gpio IRQ handler with the same name in startup code. */
 void PORTB_IRQHandler(void)
 {
@@ -92,7 +91,7 @@ void PORTE_IRQHandler(void)
 }
 #endif
 
-#if defined (K70F12_SERIES)
+#if defined(K70F12_SERIES)
 /* gpio IRQ handler with the same name in startup code. */
 void PORTF_IRQHandler(void)
 {
@@ -104,4 +103,3 @@ void PORTF_IRQHandler(void)
 /*******************************************************************************
  * EOF
  ******************************************************************************/
-
