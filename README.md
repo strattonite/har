@@ -10,6 +10,7 @@ This project implements a HAR algorithm running on the [FRDM-KLO3](https://www.n
 - data/ contains data collected using algo-dev.ipynb
 - build/ contains build files and artifacts
 ## Note:
+- If building from archive, [CMSIS_5](https://github.com/ARM-software/CMSIS_5) and [CMSIS-DSP](https://github.com/ARM-software/CMSIS-DSP) will have to be placed in extern. Either initialize a new git repo and add as submodules, or git clone them, they are not included in the archive due to size constraints.
 - file setup.conf is required with the following format, these variables should also be in the user's environment:
 
 JLINKPATH	=	PATH_TO_JLINK
