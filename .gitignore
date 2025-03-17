@@ -7,3 +7,4 @@ venv/
 build/CMakeCache.txt
 build/CMakeFiles
 build/.cmake
+figures/

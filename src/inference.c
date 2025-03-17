@@ -51,7 +51,7 @@ uint64_t tmp[4] = {0};
 float64_t float_tmp[4] = {0.0};
 
 /*
- * returns probabilities * 2^32
+ * returns probabilities * 2^10
  */
 void predict(q15_t *fft_magnitudes, uint16_t *output)
 {

@@ -597,8 +597,8 @@ int main(void)
             warpPrint(
                 "{\"type\": \"POW\", \"mode\": %d, \"loops\": %u}\n",
                 POWER_SYS_GetCurrentMode(),
-                loopCounter)
-                OSA_TimeDelay(10);
+                loopCounter);
+            OSA_TimeDelay(10);
 #endif
 
             dataReady = false;
@@ -612,14 +612,34 @@ int main(void)
                 idx = i * 6;
                 val = ((fifo_buf[idx] & 0xFF) << 6) | (fifo_buf[idx + 1] >> 2);
                 valSigned = (val ^ (1 << 13)) - (1 << 13);
+#if (OUTPUT_AXES)
+                warpPrint(
+                    "{\"type\": \"AXES\", \"group\": %d, \"sample_num\": %d, \"x\": %d, ",
+                    counter / 4,
+                    i + 16 * (counter % 4),
+                    valSigned);
+                OSA_TimeDelay(1);
+#endif
                 x = (float)valSigned / 4096.;
 
                 val = ((fifo_buf[idx + 2] & 0xFF) << 6) | (fifo_buf[idx + 3] >> 2);
                 valSigned = (val ^ (1 << 13)) - (1 << 13);
+#if (OUTPUT_AXES)
+                warpPrint(
+                    "\"y\": %d, ",
+                    valSigned);
+                OSA_TimeDelay(1);
+#endif
                 y = (float)valSigned / 4096.;
 
                 val = ((fifo_buf[idx + 4] & 0xFF) << 6) | (fifo_buf[idx + 5] >> 2);
                 valSigned = (val ^ (1 << 13)) - (1 << 13);
+#if (OUTPUT_AXES)
+                warpPrint(
+                    "\"z\": %d}\n",
+                    valSigned);
+                OSA_TimeDelay(1);
+#endif
                 z = (float)valSigned / 4096.;
 
                 /*
@@ -676,6 +696,7 @@ int main(void)
                     predictions[1],
                     predictions[2],
                     predictions[3]);
+                OSA_TimeDelay(10);
             }
             counter++;
         }

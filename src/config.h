@@ -41,9 +41,10 @@
 #define WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT 0
 
 #define ARM_MATH_CM0PLUS 1
-#define OUTPUT_TIME 1
-#define OUTPUT_FREQ 1
+#define OUTPUT_TIME 0
+#define OUTPUT_FREQ 0
 #define OUTPUT_POWER 0
+#define OUTPUT_AXES 0
 #define DEBUG_LED 1
 
 /*
