@@ -8,4 +8,4 @@ build/CMakeCache.txt
 build/CMakeFiles
 build/.cmake
 figures/
-sdk/
+# sdk/
